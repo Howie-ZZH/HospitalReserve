@@ -9,4 +9,5 @@ public interface DepartmentRepository extends MongoRepository<Department,String>
 
     //判断是否存在科室信息
     Department getDepartmentByHoscodeAndDepcode(String hoscode, String depcode);
+
 }

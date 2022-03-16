@@ -5,13 +5,14 @@ import com.atguigu.yygh.hosp.repository.DepartmentRepository;
 import com.atguigu.yygh.hosp.service.DepartmentService;
 import com.atguigu.yygh.model.hosp.Department;
 import com.atguigu.yygh.vo.hosp.DepartmentQueryVo;
+import com.atguigu.yygh.vo.hosp.DepartmentVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DepartmentServiceImpl implements DepartmentService {
@@ -71,5 +72,60 @@ public class DepartmentServiceImpl implements DepartmentService {
         }
 
 
+    }
+
+    //根据医院编号查询所有科室的列表
+    @Override
+    public List<DepartmentVo> findDeptTree(String hoscode) {
+        //创建一个list集合，用于最终数据封装
+        List<DepartmentVo> result=new ArrayList<>();
+        //根据医院编号，查询所有科室信息
+        Department departmentQuery = new Department();
+        departmentQuery.setHoscode(hoscode);
+        Example example = Example.of(departmentQuery);
+        //所有科室的列表信息
+        List<Department> departmentList = departmentRepository.findAll(example);
+
+        //根据大科室编号 bigcode 分组，获取每个大科室里面的下级子科室
+        Map<String, List<Department>> departmentMap =
+                departmentList.stream().collect(Collectors.groupingBy(Department::getBigcode));
+        //遍历map集合 departmentMap
+        for(Map.Entry<String,List<Department>>entry:departmentMap.entrySet())
+        {
+            //得到分组之后的编号：大科室编号
+            String bigCode = entry.getKey();
+            //得到大科室编号对应的全部数据
+            List<Department> department1List = entry.getValue();
+
+            //封装大科室
+            DepartmentVo department1Vo1=new DepartmentVo();
+            department1Vo1.setDepcode(bigCode);
+            department1Vo1.setDepname(department1List.get(0).getBigname());
+
+            //封装小科室
+            List<DepartmentVo> children = new ArrayList<>();
+            for(Department department: department1List){
+                DepartmentVo departmentVo2=new DepartmentVo();
+                departmentVo2.setDepcode(department.getDepcode());
+                departmentVo2.setDepname(department.getDepname());
+                children.add(departmentVo2);
+            }
+            //把小科室的list集合放入大科室的children里面
+            department1Vo1.setChildren(children);
+            //放到最终result里面去
+            result.add(department1Vo1);
+        }
+
+        return result;
+    }
+
+    //根据科室编号 医院编号 查询科室名称
+    @Override
+    public String getDepName(String hoscode, String depcode) {
+        Department department = departmentRepository.getDepartmentByHoscodeAndDepcode(hoscode, depcode);
+        if (department!=null){
+            return department.getDepname();
+        }
+        return null;
     }
 }

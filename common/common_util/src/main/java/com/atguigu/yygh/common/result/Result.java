@@ -7,13 +7,13 @@ import lombok.Data;
 /**
  * 全局统一返回结果类
  */
+
 @Data
 @ApiModel(value = "全局统一返回结果")
 public class Result<T> {
 
     @ApiModelProperty(value = "返回码")
     private Integer code;
-
     @ApiModelProperty(value = "返回消息")
     private String message;
 
